@@ -31,39 +31,45 @@ function Player(point)
     local p, speed, acceleration, max_speed = point, 0, 0, 500
     v = Vector(0, 0)
 
+    slow_down = function (dt, get, set)
+        if (get() == 0) then
+        elseif (get() > 0) then
+            set(math.max(get() - 1 * dt, 0))
+        else
+            set(math.min(get() + 1 * dt, 0))
+        end
+    end
+
     return {
         getX = p.getX,
         getY = p.getY,
 
         update = function (dt)
-            local initial_speed, moving = speed
-            moving = love.keyboard.isDown("down", "up", "right", "left")
+            local is_moving
 
-            acceleration = 10 * (1 - speed / max_speed)
+            is_moving    = love.keyboard.isDown("down", "up", "right", "left")
+            speed        = v.getX() * max_speed
+            acceleration = 1 - speed / max_speed
 
-            if (moving) then
-                if (speed < max_speed) then
-                    speed = math.min(speed + acceleration, 500)
+            if (is_moving) then
+                if love.keyboard.isDown("right") then
+                    v.setX(math.min(v.getX() + 1 * dt, 1))
+                elseif love.keyboard.isDown("left") then
+                    v.setX(math.max(v.getX() - 1 * dt, -1))
+                else
+                    slow_down(dt, v.getX, v.setX)
                 end
 
                 if love.keyboard.isDown("down") then
                     v.setY(math.min(v.getY() + 1 * dt, 1))
                 elseif love.keyboard.isDown("up") then
                     v.setY(math.max(v.getY() - 1 * dt, -1))
-                else v.setY(0) end
-
-                if love.keyboard.isDown("right") then
-                    v.setX(math.min(v.getX() + 1 * dt, 1))
-                elseif love.keyboard.isDown("left") then
-                    v.setX(math.max(v.getX() - 1 * dt, -1))
-                else v.setX(0) end
-            else
-                if (speed > 0) then
-                    speed = math.max(speed - acceleration, 0)
-                elseif (speed == 0) then
-                    v.setX(0)
-                    v.setY(0)
+                else
+                    slow_down(dt, v.getY, v.setY)
                 end
+            else
+                slow_down(dt, v.getX, v.setX)
+                slow_down(dt, v.getY, v.setY)
             end
 
             -- TODO diagonal movement needs to be sqrt(2) times harder
