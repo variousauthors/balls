@@ -47,28 +47,30 @@ function Player(point)
                 end
 
                 if love.keyboard.isDown("down") then
-                    v.setY(1)
+                    v.setY(math.min(v.getY() + 1 * dt, 1))
                 elseif love.keyboard.isDown("up") then
-                    v.setY(-1)
+                    v.setY(math.max(v.getY() - 1 * dt, -1))
                 else v.setY(0) end
 
                 if love.keyboard.isDown("right") then
-                    v.setX(1)
+                    v.setX(math.min(v.getX() + 1 * dt, 1))
                 elseif love.keyboard.isDown("left") then
-                    v.setX(-1)
+                    v.setX(math.max(v.getX() - 1 * dt, -1))
                 else v.setX(0) end
             else
                 if (speed > 0) then
                     speed = math.max(speed - acceleration, 0)
+                elseif (speed == 0) then
+                    v.setX(0)
+                    v.setY(0)
                 end
-
             end
 
             -- TODO diagonal movement needs to be sqrt(2) times harder
             -- TODO change in direction should be incremental
 
-            p.setY(p.getY() + v.getY() * dt * speed)
-            p.setX(p.getX() + v.getX() * dt * speed)
+            p.setY(p.getY() + v.getY() * dt * 500)
+            p.setX(p.getX() + v.getX() * dt * 500)
         end
     }
 end
