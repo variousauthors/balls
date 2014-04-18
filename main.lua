@@ -23,29 +23,52 @@ function Point(x, y)
     }
 end
 
+function Vector(x, y)
+    return Point(x, y)
+end
+
 function Player(point)
-    local p = point
+    local p, speed, acceleration, max_speed = point, 0, 0, 500
+    v = Vector(0, 0)
 
     return {
         getX = p.getX,
         getY = p.getY,
 
-        update = function ()
-            if love.keyboard.isDown("down") then
-                p.setY(p.getY() + 1)
+        update = function (dt)
+            local initial_speed, moving = speed
+            moving = love.keyboard.isDown("down", "up", "right", "left")
+
+            acceleration = 10 * (1 - speed / max_speed)
+
+            if (moving) then
+                if (speed < max_speed) then
+                    speed = math.min(speed + acceleration, 500)
+                end
+
+                if love.keyboard.isDown("down") then
+                    v.setY(1)
+                elseif love.keyboard.isDown("up") then
+                    v.setY(-1)
+                else v.setY(0) end
+
+                if love.keyboard.isDown("right") then
+                    v.setX(1)
+                elseif love.keyboard.isDown("left") then
+                    v.setX(-1)
+                else v.setX(0) end
+            else
+                if (speed > 0) then
+                    speed = math.max(speed - acceleration, 0)
+                end
+
             end
 
-            if love.keyboard.isDown("up") then
-                p.setY(p.getY() - 1)
-            end
+            -- TODO diagonal movement needs to be sqrt(2) times harder
+            -- TODO change in direction should be incremental
 
-            if love.keyboard.isDown("right") then
-                p.setX(p.getX() + 1)
-            end
-
-            if love.keyboard.isDown("left") then
-                p.setX(p.getX() - 1)
-            end
+            p.setY(p.getY() + v.getY() * dt * speed)
+            p.setX(p.getX() + v.getX() * dt * speed)
         end
     }
 end
@@ -53,6 +76,8 @@ end
 function love.draw()
     love.graphics.circle("fill", player.getX(), player.getY(), 10)
     love.graphics.circle("fill", origin.getX(), origin.getY(), 10)
+
+    love.graphics.print(text, 420, 420)
 end
 
 function love.load()
