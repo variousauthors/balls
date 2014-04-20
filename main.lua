@@ -1,5 +1,7 @@
 local origin, player, orbiter
-local text = "nothing"
+local debug   = "nothing"
+local status  = "happy"
+local max_mag = 0
 
 function Point(x, y)
     local x, y = x, y
@@ -27,12 +29,17 @@ function Vector(x, y)
     local p = Point(x, y)
 
     p.length = function ()
-        return math.sqrt(p.getX() ^ 2, p.getY() ^ 2)
+        return math.sqrt(p.getX() ^ 2 + p.getY() ^ 2)
     end
 
     -- returns a new vector with a length of 1
     p.to_unit = function ()
         local mag = p.length()
+
+        if (mag > max_mag) then
+            max_mag = mag
+            debug = mag
+        end
 
         return Vector(p.getX() / mag, p.getY() / mag)
     end
@@ -110,6 +117,11 @@ function Collider(vector, x, y, speed)
         end,
 
         update = function (dt)
+            local to_player = Vector(p.getX() - player.getX(), p.getY() - player.getY())
+
+            if (to_player.length() < 10) then
+                status = "COLLISION"
+            end
 
             p.setY(p.getY() + v.getY() * dt * speed)
             p.setX(p.getX() + v.getX() * dt * speed)
@@ -198,7 +210,8 @@ function love.draw()
 
     orbiter.draw()
 
-    love.graphics.print(text, 420, 420)
+    love.graphics.print(status, 420, 420)
+    love.graphics.print(debug, 220, 220)
 end
 
 function love.load()
