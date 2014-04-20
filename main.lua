@@ -28,8 +28,9 @@ function Vector(x, y)
 end
 
 function Player(point)
-    local p, speed, acceleration, max_speed = point, 0, 0, 500
+    local speed, p = 500
     v = Vector(0, 0)
+    p = Point(point.getX(), point.getY())
 
     slow_down = function (dt, get, set)
         if (get() == 0) then
@@ -48,8 +49,6 @@ function Player(point)
             local is_moving
 
             is_moving    = love.keyboard.isDown("down", "up", "right", "left")
-            speed        = v.getX() * max_speed
-            acceleration = 1 - speed / max_speed
 
             if (is_moving) then
                 if love.keyboard.isDown("right") then
@@ -73,10 +72,9 @@ function Player(point)
             end
 
             -- TODO diagonal movement needs to be sqrt(2) times harder
-            -- TODO change in direction should be incremental
 
-            p.setY(p.getY() + v.getY() * dt * 500)
-            p.setX(p.getX() + v.getX() * dt * 500)
+            p.setY(p.getY() + v.getY() * dt * speed)
+            p.setX(p.getX() + v.getX() * dt * speed)
         end
     }
 end
