@@ -94,12 +94,20 @@ end
 
 -- @param x and y are the birthplace of the collider
 function Collider(vector, x, y, speed)
-    local v = Vector(vector.getX(), vector.getY())
+    local v, active = Vector(vector.getX(), vector.getY()), true
     local p = Point(x, y)
 
     return {
-        getX = v.getX,
-        getY = v.getY,
+        getX = p.getX,
+        getY = p.getY,
+
+        setActive = function (bool)
+            active = bool
+        end,
+
+        isActive = function ()
+            return active
+        end,
 
         update = function (dt)
 
@@ -136,7 +144,18 @@ function Orbiter(origin, amp_x, amp_y)
 
         update = function (dt)
             for i, collider in ipairs(colliders) do
-                collider.update(dt)
+                if (collider.isActive) then
+
+                    if (collider.getX() > love.window.getWidth() 
+                        or collider.getX() < 0
+                        or collider.getY() > love.window.getHeight()
+                        or collider.getY() < 0) then
+
+                        colliders[i].setActive(false)
+                    else
+                        collider.update(dt)
+                    end
+                end
             end
 
             t = (t + dt) % (2 * math.pi)
@@ -163,7 +182,9 @@ function Orbiter(origin, amp_x, amp_y)
 
         draw = function () 
             for i, collider in ipairs(colliders) do
-                collider.draw()
+                if (collider.isActive()) then
+                    collider.draw()
+                end
             end
 
             love.graphics.circle("fill", orbiter.getX(), orbiter.getY(), 10)
