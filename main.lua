@@ -24,7 +24,20 @@ function Point(x, y)
 end
 
 function Vector(x, y)
-    return Point(x, y)
+    local p = Point(x, y)
+
+    p.length = function ()
+        return math.sqrt(p.getX() ^ 2, p.getY() ^ 2)
+    end
+
+    -- returns a new vector with a length of 1
+    p.to_unit = function ()
+        local mag = p.length()
+
+        return Vector(p.getX() / mag, p.getY() / mag)
+    end
+
+    return p
 end
 
 function Player(point)
@@ -103,16 +116,16 @@ end
 -- @param x, y are the initial position of the producer
 -- @param amp_x, amp_y, are the amplitude of x and y as they drift
 --        back and forth along their axis
-function Orbiter(origin, amp_x, amp_y, x, y)
+function Orbiter(origin, amp_x, amp_y)
     local t, index, colliders, debounce = 0, 0, {}, false
     local origin = Point(origin.getX(), origin.getY())
 
     orbX = function ()
-        return amp_x * math.sin(t + math.pi / 2) + x
+        return amp_x * math.sin(t + math.pi / 2) + origin.getX()
     end
 
     orbY = function ()
-        return amp_y * math.sin(t) + y
+        return amp_y * math.sin(t) + origin.getY()
     end
 
     return {
@@ -132,7 +145,11 @@ function Orbiter(origin, amp_x, amp_y, x, y)
             if (t % (math.pi / 5) < 0.1) then
                 if (debounce == false) then
                     debounce = true
-                    colliders[index] = Collider(Vector(1, 1), orbX(), orbY(), 100)
+
+                    local dx, dy = orbX() - player.getX(), orbY() - player.getY()
+                    local v      = Vector(-dx, -dy)
+
+                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 100)
 
                     index = index + 1
                 end
@@ -141,6 +158,7 @@ function Orbiter(origin, amp_x, amp_y, x, y)
             end
 
             -- possibly remove a collider from the table
+            -- if its distance from origin exceeds the amp_x/amp_y
         end,
 
         draw = function () 
@@ -170,7 +188,7 @@ function love.load()
 
    origin  = Point(love.window.getWidth() / 2, love.window.getHeight() / 2)
    player  = Player(origin)
-   orbiter = Orbiter(origin, 300, 300, origin.getX(), origin.getY())
+   orbiter = Orbiter(origin, 300, 300)
 end
 
 function love.focus(f) gameIsPaused = not f end
