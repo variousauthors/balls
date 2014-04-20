@@ -1,4 +1,4 @@
-local origin, player
+local origin, player, orbiter
 local text = "nothing"
 
 function Point(x, y)
@@ -79,9 +79,85 @@ function Player(point)
     }
 end
 
+-- @param x and y are the birthplace of the collider
+function Collider(vector, x, y, speed)
+    local v = Vector(vector.getX(), vector.getY())
+    local p = Point(x, y)
+
+    return {
+        getX = v.getX,
+        getY = v.getY,
+
+        update = function (dt)
+
+            p.setY(p.getY() + v.getY() * dt * speed)
+            p.setX(p.getX() + v.getX() * dt * speed)
+        end,
+
+        draw = function ()
+            love.graphics.circle("fill", p.getX(), p.getY(), 10)
+        end
+    }
+end
+
+-- @param x, y are the initial position of the producer
+-- @param amp_x, amp_y, are the amplitude of x and y as they drift
+--        back and forth along their axis
+function Orbiter(origin, amp_x, amp_y, x, y)
+    local t, index, colliders, debounce = 0, 0, {}, false
+    local origin = Point(origin.getX(), origin.getY())
+
+    orbX = function ()
+        return amp_x * math.sin(t + math.pi / 2) + x
+    end
+
+    orbY = function ()
+        return amp_y * math.sin(t) + y
+    end
+
+    return {
+        -- sinusoidal function on time
+        -- we can adjust the excentricity by adding to the denominator
+        getX = orbX,
+        getY = orbY,
+
+        update = function (dt)
+            for i, collider in ipairs(colliders) do
+                collider.update(dt)
+            end
+
+            t = (t + dt) % (2 * math.pi)
+
+            -- possibly add a collider to the table
+            if (t % (math.pi / 5) < 0.1) then
+                if (debounce == false) then
+                    debounce = true
+                    colliders[index] = Collider(Vector(1, 1), orbX(), orbY(), 100)
+
+                    index = index + 1
+                end
+            else
+                debounce = false
+            end
+
+            -- possibly remove a collider from the table
+        end,
+
+        draw = function () 
+            for i, collider in ipairs(colliders) do
+                collider.draw()
+            end
+
+            love.graphics.circle("fill", orbiter.getX(), orbiter.getY(), 10)
+        end
+    }
+end
+
 function love.draw()
     love.graphics.circle("fill", player.getX(), player.getY(), 10)
     love.graphics.circle("fill", origin.getX(), origin.getY(), 10)
+
+    orbiter.draw()
 
     love.graphics.print(text, 420, 420)
 end
@@ -92,12 +168,14 @@ function love.load()
    love.graphics.setColor(0,0,0)
    love.graphics.setBackgroundColor(255,255,255)
 
-   origin = Point(love.window.getWidth() / 2, love.window.getHeight() / 2)
-   player = Player(origin)
+   origin  = Point(love.window.getWidth() / 2, love.window.getHeight() / 2)
+   player  = Player(origin)
+   orbiter = Orbiter(origin, 300, 300, origin.getX(), origin.getY())
 end
 
 function love.focus(f) gameIsPaused = not f end
 
 function love.update(dt)
     player.update(dt)
+    orbiter.update(dt)
 end
