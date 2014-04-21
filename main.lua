@@ -29,7 +29,7 @@ function Vector(x, y)
     local p = Point(x, y)
 
     p.length = function ()
-        return math.sqrt(p.getX() ^ 2 + p.getY() ^ 2)
+        return math.sqrt(p.getX() ^ 2 +, p.getY() ^ 2)
     end
 
     -- returns a new vector with a length of 1
