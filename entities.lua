@@ -5,9 +5,9 @@ local debug   = "nothing"
 local status  = "happy"
 local time    = 0
 
-local RED   = { 200, 55, 0 }
-local BLUE  = { 0, 200, 55 }
-local GREEN = { 55, 0, 200 }
+local RED    = { 200, 55, 0 }
+local GREEN  = { 0, 200, 55 }
+local BLUE   = { 55, 0, 200 }
 
 local w_width  = love.window.getWidth()
 local w_height = love.window.getHeight()
@@ -35,9 +35,9 @@ function love.load()
     origin  = Point(w_width / 2, w_height / 2)
     player  = Entities.Player(origin)
     orbiters = {
-        Entities.Orbiter(origin, w_width, w_width, math.pi / 10, RED, 10),
-        Entities.Orbiter(origin, w_width * 2, w_height * 2, math.pi / 5, BLUE, 20),
-        Entities.Orbiter(origin, w_width, w_height, math.pi / 3, GREEN, 40)
+        Entities.Orbiter(origin, w_width, w_width, math.pi / 10, 200, RED, 10),
+        Entities.Orbiter(origin, w_width * 2, w_height * 2, math.pi / 5, 300, GREEN, 20),
+        Entities.Orbiter(origin, w_width, w_height, math.pi / 3, 100, BLUE, 40)
     }
 end
 
@@ -206,7 +206,7 @@ end
 -- @param period the number of radians between launching a collider
 -- @param amp_x, amp_y, are the amplitude of x and y as they drift
 --        back and forth along their axis
-local Orbiter = function (origin, amp_x, amp_y, period, color, size)
+local Orbiter = function (origin, amp_x, amp_y, period, speed, color, size)
     local t, index, colliders, debounce = 0, 0, {}, false
     local origin = Point(origin.getX(), origin.getY())
 
@@ -248,7 +248,7 @@ local Orbiter = function (origin, amp_x, amp_y, period, color, size)
                     local dx, dy = orbX() - player.getX(), orbY() - player.getY()
                     local v      = Vector(-dx, -dy)
 
-                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 200, color, size)
+                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), speed, color, size)
 
                     index = index + 1
                 end
