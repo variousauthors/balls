@@ -17,9 +17,7 @@ function love.draw()
         orbiter.draw()
     end
 
-    love.graphics.print(player.getPower(), 420, 420)
-    love.graphics.print(debug, 220, 220)
-    love.graphics.print(status, 320, 320)
+    love.graphics.print(debug, 100, 100)
 end
 
 function love.load()
@@ -34,9 +32,9 @@ function love.load()
     origin  = Point(w_width / 2, w_height / 2)
     player  = Entities.Player(origin)
     orbiters = {
-        Entities.Orbiter(origin, w_width, w_height, math.pi / 5, RED, 10),
-        Entities.Orbiter(origin, w_width, w_height, math.pi / 4, BLUE, 20),
-        Entities.Orbiter(origin, w_width, w_height, math.pi / 2, GREEN, 40)
+        Entities.Orbiter(origin, w_width, w_width, math.pi / 10, RED, 10),
+        Entities.Orbiter(origin, w_width * 2, w_height * 2, math.pi / 5, BLUE, 20),
+        Entities.Orbiter(origin, w_width, w_height, math.pi / 3, GREEN, 40)
     }
 end
 
@@ -183,7 +181,7 @@ local Collider = function (vector, x, y, speed, color, size)
         update = function (dt, player)
             local to_player = Vector(p.getX() - player.getX(), p.getY() - player.getY())
 
-            if (to_player.length() < 10) then
+            if (to_player.length() < size) then
                 player.addCollision()
                 setActive(false)
             end
@@ -207,11 +205,12 @@ local Orbiter = function (origin, amp_x, amp_y, period, color, size)
     local t, index, colliders, debounce = 0, 0, {}, false
     local origin = Point(origin.getX(), origin.getY())
 
-    orbX = function ()
+    local orbX = function ()
+        debug = amp_x
         return amp_x * math.sin(t + math.pi / 2) + origin.getX()
     end
 
-    orbY = function ()
+    local orbY = function ()
         return amp_y * math.sin(t) + origin.getY()
     end
 
@@ -263,6 +262,7 @@ local Orbiter = function (origin, amp_x, amp_y, period, color, size)
                 end
             end
 
+            -- we don't actually draw the orbiter
             love.graphics.circle("fill", orbX(), orbY(), 10)
         end
     }
