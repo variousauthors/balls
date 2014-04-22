@@ -3,7 +3,7 @@ require "vector"
 local origin, player, orbiter
 local debug   = "nothing"
 local status  = "happy"
-local count = 0
+local time    = 0
 
 local RED   = { 200, 55, 0 }
 local BLUE  = { 0, 200, 55 }
@@ -22,15 +22,15 @@ function love.draw()
 
     local increment = (w_width - 100) / 100
     love.graphics.setColor(255, 0, 0)
-    love.graphics.rectangle("fill", 50, w_height - 50, player.getPower() * increment, 20);
+    love.graphics.rectangle("fill", 50, w_height - 50, math.max(player.getPower() * increment, 0), 20);
+    love.graphics.print(time, 50, 50)
 end
 
 function love.load()
 
     -- image = love.graphics.newImage("cake.jpg")
-    love.graphics.setNewFont(12)
-    love.graphics.setColor(0,0,0)
-    love.graphics.setBackgroundColor(255,255,255)
+    love.graphics.setNewFont("assets/Audiowide-Regular.ttf", 14)
+    love.graphics.setBackgroundColor(200, 200, 200)
 
     origin  = Point(w_width / 2, w_height / 2)
     player  = Entities.Player(origin)
@@ -45,6 +45,8 @@ function love.focus(f) gameIsPaused = not f end
 
 function love.update(dt)
     if (player.getPower() > 0) then
+        time = time + dt
+
         for i, orbiter in ipairs(orbiters) do
             orbiter.update(dt, player)
         end
@@ -246,7 +248,7 @@ local Orbiter = function (origin, amp_x, amp_y, period, color, size)
                     local dx, dy = orbX() - player.getX(), orbY() - player.getY()
                     local v      = Vector(-dx, -dy)
 
-                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 100, color, size)
+                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 200, color, size)
 
                     index = index + 1
                 end

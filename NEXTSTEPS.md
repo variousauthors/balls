@@ -1,8 +1,8 @@
 NEXTSTEPS
 ---------
 
- - Add a visible health bar and score counter
- - Choose a nicer background color
+ - Add a 3, 2, 1 counter at the start
+ - automatically restart the game after a lose
 
 DRAGONS
 -------
