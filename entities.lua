@@ -5,11 +5,17 @@ local debug   = "nothing"
 local status  = "happy"
 local count = 0
 
-function love.draw()
-    love.graphics.circle("fill", player.getX(), player.getY(), 10)
-    love.graphics.circle("fill", origin.getX(), origin.getY(), 10)
+local RED   = { 255, 0, 0 }
+local BLUE  = { 0, 255, 0 }
+local GREEN = { 0, 0, 255 }
 
-    orbiter.draw()
+function love.draw()
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.circle("fill", player.getX(), player.getY(), 10)
+
+    for i, orbiter in ipairs(orbiters) do
+        orbiter.draw()
+    end
 
     love.graphics.print(player.getPower(), 420, 420)
     love.graphics.print(debug, 220, 220)
@@ -17,21 +23,62 @@ function love.draw()
 end
 
 function love.load()
-   -- image = love.graphics.newImage("cake.jpg")
-   love.graphics.setNewFont(12)
-   love.graphics.setColor(0,0,0)
-   love.graphics.setBackgroundColor(255,255,255)
+    local w_width  = love.window.getWidth()
+    local w_height = love.window.getHeight()
 
-   origin  = Point(love.window.getWidth() / 2, love.window.getHeight() / 2)
-   player  = Entities.Player(origin)
-   orbiter = Entities.Orbiter(origin, 300, 300)
+    -- image = love.graphics.newImage("cake.jpg")
+    love.graphics.setNewFont(12)
+    love.graphics.setColor(0,0,0)
+    love.graphics.setBackgroundColor(255,255,255)
+
+    origin  = Point(w_width / 2, w_height / 2)
+    player  = Entities.Player(origin)
+    orbiters = {
+        Entities.Orbiter(origin, w_width + 50, w_height + 50, math.pi / 5, RED),
+        Entities.Orbiter(origin, w_width + 100, w_height + 150, math.pi / 4, BLUE),
+        Entities.Orbiter(origin, w_width + 150, w_height + 50, math.pi / 2, GREEN)
+    }
 end
 
 function love.focus(f) gameIsPaused = not f end
 
 function love.update(dt)
-    orbiter.update(dt, player)
-    player.update(dt)
+    if (player.getPower() > 0) then
+        for i, orbiter in ipairs(orbiters) do
+            orbiter.update(dt, player)
+        end
+
+        player.update(dt)
+    end
+
+end
+
+local Collision = function (callback)
+    local index, collisions = 1, {}
+
+    local clear = function ()
+        collisions = {}
+        index = 1
+    end
+
+    return {
+        -- adds a collision to be handled at update
+        add = function () 
+            collisions[index] = true
+            index = index + 1
+        end,
+
+        -- clears all collisions
+        clear = clear,
+
+        resolve = function ()
+            for i, collision in ipairs(collisions) do
+                callback()
+            end
+
+            clear()
+        end
+    }
 end
 
 local Player = function (point)
@@ -48,33 +95,7 @@ local Player = function (point)
         end
     end
 
-    local collisions = (function (callback) 
-        local index, collisions = 1, {}
-
-        local clear = function ()
-            collisions = {}
-            index = 1
-        end
-
-        return {
-            -- adds a collision to be handled at update
-            add = function () 
-                collisions[index] = true
-                index = index + 1
-            end,
-
-            -- clears all collisions
-            clear = clear,
-
-            resolve = function ()
-                for i, collision in ipairs(collisions) do
-                    callback()
-                end
-
-                clear()
-            end
-        }
-    end)(function () 
+    local collisions = Collision(function ()
         power = power - 10
     end)
 
@@ -124,12 +145,16 @@ local Player = function (point)
 end
 
 -- @param x and y are the birthplace of the collider
-local Collider = function (vector, x, y, speed)
-    local v, active = Vector(vector.getX(), vector.getY()), true
+local Collider = function (vector, x, y, speed, color)
+    local v, active, visible = Vector(vector.getX(), vector.getY()), true, false
     local p = Point(x, y)
 
     local setActive = function (bool)
         active = bool
+    end
+
+    local setVisible = function (bool)
+        visible = bool
     end
 
     return {
@@ -140,6 +165,19 @@ local Collider = function (vector, x, y, speed)
 
         isActive = function ()
             return active
+        end,
+
+        setVisible = setVisible,
+
+        isVisible = function ()
+            return visible;
+        end,
+
+        isOffScreen = function ()
+            return collider.getX() > love.window.getWidth()
+                or collider.getX() < 0
+                or collider.getY() > love.window.getHeight()
+                or collider.getY() < 0
         end,
 
         update = function (dt, player)
@@ -155,15 +193,17 @@ local Collider = function (vector, x, y, speed)
         end,
 
         draw = function ()
+            love.graphics.setColor(color)
             love.graphics.circle("fill", p.getX(), p.getY(), 10)
         end
     }
 end
 
 -- @param x, y are the initial position of the producer
+-- @param period the number of radians between launching a collider
 -- @param amp_x, amp_y, are the amplitude of x and y as they drift
 --        back and forth along their axis
-local Orbiter = function (origin, amp_x, amp_y)
+local Orbiter = function (origin, amp_x, amp_y, period, color)
     local t, index, colliders, debounce = 0, 0, {}, false
     local origin = Point(origin.getX(), origin.getY())
 
@@ -185,10 +225,7 @@ local Orbiter = function (origin, amp_x, amp_y)
             for i, collider in ipairs(colliders) do
                 if (collider.isActive()) then
 
-                    if (collider.getX() > love.window.getWidth() 
-                        or collider.getX() < 0
-                        or collider.getY() > love.window.getHeight()
-                        or collider.getY() < 0) then
+                    if (collider.isVisible() and collider.isOffScreen()) then
 
                         colliders[i].setActive(false)
                     else
@@ -200,14 +237,14 @@ local Orbiter = function (origin, amp_x, amp_y)
             t = (t + dt) % (2 * math.pi)
 
             -- possibly add a collider to the table
-            if (t % (math.pi / 5) < 0.1) then
+            if (t % period < 0.1) then
                 if (debounce == false) then
                     debounce = true
 
                     local dx, dy = orbX() - player.getX(), orbY() - player.getY()
                     local v      = Vector(-dx, -dy)
 
-                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 100)
+                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 100, color)
 
                     index = index + 1
                 end
