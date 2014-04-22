@@ -34,9 +34,9 @@ function love.load()
     origin  = Point(w_width / 2, w_height / 2)
     player  = Entities.Player(origin)
     orbiters = {
-        Entities.Orbiter(origin, w_width + 50, w_height + 50, math.pi / 5, RED),
-        Entities.Orbiter(origin, w_width + 100, w_height + 150, math.pi / 4, BLUE),
-        Entities.Orbiter(origin, w_width + 150, w_height + 50, math.pi / 2, GREEN)
+        Entities.Orbiter(origin, w_width, w_height, math.pi / 5, RED, 10),
+        Entities.Orbiter(origin, w_width, w_height, math.pi / 4, BLUE, 20),
+        Entities.Orbiter(origin, w_width, w_height, math.pi / 2, GREEN, 40)
     }
 end
 
@@ -145,7 +145,7 @@ local Player = function (point)
 end
 
 -- @param x and y are the birthplace of the collider
-local Collider = function (vector, x, y, speed, color)
+local Collider = function (vector, x, y, speed, color, size)
     local v, active, visible = Vector(vector.getX(), vector.getY()), true, false
     local p = Point(x, y)
 
@@ -194,7 +194,7 @@ local Collider = function (vector, x, y, speed, color)
 
         draw = function ()
             love.graphics.setColor(color)
-            love.graphics.circle("fill", p.getX(), p.getY(), 10)
+            love.graphics.circle("fill", p.getX(), p.getY(), size)
         end
     }
 end
@@ -203,7 +203,7 @@ end
 -- @param period the number of radians between launching a collider
 -- @param amp_x, amp_y, are the amplitude of x and y as they drift
 --        back and forth along their axis
-local Orbiter = function (origin, amp_x, amp_y, period, color)
+local Orbiter = function (origin, amp_x, amp_y, period, color, size)
     local t, index, colliders, debounce = 0, 0, {}, false
     local origin = Point(origin.getX(), origin.getY())
 
@@ -244,7 +244,7 @@ local Orbiter = function (origin, amp_x, amp_y, period, color)
                     local dx, dy = orbX() - player.getX(), orbY() - player.getY()
                     local v      = Vector(-dx, -dy)
 
-                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 100, color)
+                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), 100, color, size)
 
                     index = index + 1
                 end
