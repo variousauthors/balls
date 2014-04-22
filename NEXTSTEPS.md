@@ -1,3 +1,8 @@
+NEXTSTEPS
+---------
+
+ - Add a visible health bar and score counter
+ - Choose a nicer background color
 
 DRAGONS
 -------

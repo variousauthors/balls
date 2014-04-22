@@ -5,9 +5,12 @@ local debug   = "nothing"
 local status  = "happy"
 local count = 0
 
-local RED   = { 255, 0, 0 }
-local BLUE  = { 0, 255, 0 }
-local GREEN = { 0, 0, 255 }
+local RED   = { 200, 55, 0 }
+local BLUE  = { 0, 200, 55 }
+local GREEN = { 55, 0, 200 }
+
+local w_width  = love.window.getWidth()
+local w_height = love.window.getHeight()
 
 function love.draw()
     love.graphics.setColor(0, 0, 0)
@@ -17,12 +20,12 @@ function love.draw()
         orbiter.draw()
     end
 
-    love.graphics.print(debug, 100, 100)
+    local increment = (w_width - 100) / 100
+    love.graphics.setColor(255, 0, 0)
+    love.graphics.rectangle("fill", 50, w_height - 50, player.getPower() * increment, 20);
 end
 
 function love.load()
-    local w_width  = love.window.getWidth()
-    local w_height = love.window.getHeight()
 
     -- image = love.graphics.newImage("cake.jpg")
     love.graphics.setNewFont(12)
@@ -61,8 +64,8 @@ local Collision = function (callback)
 
     return {
         -- adds a collision to be handled at update
-        add = function () 
-            collisions[index] = true
+        add = function (collision)
+            collisions[index] = collision
             index = index + 1
         end,
 
@@ -71,7 +74,7 @@ local Collision = function (callback)
 
         resolve = function ()
             for i, collision in ipairs(collisions) do
-                callback()
+                callback(collision)
             end
 
             clear()
@@ -93,8 +96,8 @@ local Player = function (point)
         end
     end
 
-    local collisions = Collision(function ()
-        power = power - 10
+    local collisions = Collision(function (collision)
+        power = power - collision.damage
     end)
 
     return {
@@ -182,7 +185,7 @@ local Collider = function (vector, x, y, speed, color, size)
             local to_player = Vector(p.getX() - player.getX(), p.getY() - player.getY())
 
             if (to_player.length() < size) then
-                player.addCollision()
+                player.addCollision({ damage = size })
                 setActive(false)
             end
 
