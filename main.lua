@@ -100,7 +100,6 @@ function love.draw()
     -- draw the timer
     love.graphics.setFont(SCORE_FONT)
     love.graphics.print(score, 50, 50)
-    love.graphics.print(debug, 150, 150)
 
     if (gameOver) then
         -- draw the prompt
@@ -130,7 +129,10 @@ function love.focus(f) gameIsPaused = not f end
 
 -- if the game is over, press space to go again!
 function love.keyreleased(key)
-    debug = key
+    if (key == "escape") then
+        love.event.quit()
+    end
+
     if (key == " ") then
         gameOver  = false
         countdown = 4
