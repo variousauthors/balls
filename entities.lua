@@ -96,9 +96,10 @@ local Player = function (point)
 end
 
 -- @param x and y are the birthplace of the collider
-local Collider = function (vector, x, y, speed, color, size)
+local Collider = function (vector, x, y, speed, color, size, sfx)
     local v, active, visible = Vector(vector.getX(), vector.getY()), true, false
     local p = Point(x, y)
+    local was_off_screen = false
 
     local setActive = function (bool)
         active = bool
@@ -106,6 +107,17 @@ local Collider = function (vector, x, y, speed, color, size)
 
     local setVisible = function (bool)
         visible = bool
+    end
+    
+    local isVisible = function ()
+        return visible;
+    end
+
+    local isOffScreen = function ()
+        return p.getX() > love.window.getWidth()
+            or p.getX() < 0
+            or p.getY() > love.window.getHeight()
+            or p.getY() < 0
     end
 
     return {
@@ -119,33 +131,39 @@ local Collider = function (vector, x, y, speed, color, size)
         end,
 
         setVisible = setVisible,
+        isVisible  = isVisible,
 
-        isVisible = function ()
-            return visible;
-        end,
-
-        isOffScreen = function ()
-            return collider.getX() > love.window.getWidth()
-                or collider.getX() < 0
-                or collider.getY() > love.window.getHeight()
-                or collider.getY() < 0
-        end,
+        isOffScreen = isOffScreen,
 
         update = function (dt, player)
             local to_player = Vector(p.getX() - player.getX(), p.getY() - player.getY())
 
             if (to_player.length() < size) then
+                if (sfx) then
+                    love.audio.play(sfx)
+                end
                 player.addCollision({ damage = size })
                 setActive(false)
             end
+
+            local is_off_screen = isOffScreen()
+
+            -- determine if the collider just entered the screen
+            if (not is_off_screen and was_off_screen) then
+                setVisible(true)
+            end
+
+            was_off_screen = isOffScreen()
 
             p.setY(p.getY() + v.getY() * dt * speed)
             p.setX(p.getX() + v.getX() * dt * speed)
         end,
 
         draw = function ()
-            love.graphics.setColor(color)
-            love.graphics.circle("fill", p.getX(), p.getY(), size)
+            if (isVisible()) then
+                love.graphics.setColor(color)
+                love.graphics.circle("fill", p.getX(), p.getY(), size)
+            end
         end
     }
 end
@@ -178,7 +196,6 @@ local Orbiter = function (origin, amp_x, amp_y, period, speed, color, size, sfx)
                 if (collider.isActive()) then
 
                     if (collider.isVisible() and collider.isOffScreen()) then
-
                         colliders[i].setActive(false)
                     else
                         collider.update(dt, player)
@@ -196,10 +213,7 @@ local Orbiter = function (origin, amp_x, amp_y, period, speed, color, size, sfx)
                     local dx, dy = orbX() - player.getX(), orbY() - player.getY()
                     local v      = Vector(-dx, -dy)
 
-                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), speed, color, size)
-                    if (sfx) then
-                        sfx:play()
-                    end
+                    colliders[index] = Collider(v.to_unit(), orbX(), orbY(), speed, color, size, sfx)
 
                     index = index + 1
                 end
