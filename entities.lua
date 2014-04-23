@@ -1,61 +1,5 @@
 require "vector"
 
-local origin, player, orbiter
-local debug   = "nothing"
-local status  = "happy"
-local time    = 0
-
-local RED    = { 200, 55, 0 }
-local GREEN  = { 0, 200, 55 }
-local BLUE   = { 55, 0, 200 }
-
-local w_width  = love.window.getWidth()
-local w_height = love.window.getHeight()
-
-function love.draw()
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.circle("fill", player.getX(), player.getY(), 10)
-
-    for i, orbiter in ipairs(orbiters) do
-        orbiter.draw()
-    end
-
-    local increment = (w_width - 100) / 100
-    love.graphics.setColor(255, 0, 0)
-    love.graphics.rectangle("fill", 50, w_height - 50, math.max(player.getPower() * increment, 0), 20);
-    love.graphics.print(time, 50, 50)
-end
-
-function love.load()
-
-    -- image = love.graphics.newImage("cake.jpg")
-    love.graphics.setNewFont("assets/Audiowide-Regular.ttf", 14)
-    love.graphics.setBackgroundColor(200, 200, 200)
-
-    origin  = Point(w_width / 2, w_height / 2)
-    player  = Entities.Player(origin)
-    orbiters = {
-        Entities.Orbiter(origin, w_width, w_width, math.pi / 10, 200, RED, 10),
-        Entities.Orbiter(origin, w_width * 2, w_height * 2, math.pi / 5, 300, GREEN, 20),
-        Entities.Orbiter(origin, w_width, w_height, math.pi / 3, 100, BLUE, 40)
-    }
-end
-
-function love.focus(f) gameIsPaused = not f end
-
-function love.update(dt)
-    if (player.getPower() > 0) then
-        time = time + dt
-
-        for i, orbiter in ipairs(orbiters) do
-            orbiter.update(dt, player)
-        end
-
-        player.update(dt)
-    end
-
-end
-
 local Collision = function (callback)
     local index, collisions = 1, {}
 
@@ -107,6 +51,10 @@ local Player = function (point)
         getY = p.getY,
         getPower = function ()
             return power
+        end,
+
+        setPower = function (p)
+            power = p
         end,
 
         addCollision = collisions.add,
@@ -206,7 +154,7 @@ end
 -- @param period the number of radians between launching a collider
 -- @param amp_x, amp_y, are the amplitude of x and y as they drift
 --        back and forth along their axis
-local Orbiter = function (origin, amp_x, amp_y, period, speed, color, size)
+local Orbiter = function (origin, amp_x, amp_y, period, speed, color, size, sfx)
     local t, index, colliders, debounce = 0, 0, {}, false
     local origin = Point(origin.getX(), origin.getY())
 
@@ -249,6 +197,9 @@ local Orbiter = function (origin, amp_x, amp_y, period, speed, color, size)
                     local v      = Vector(-dx, -dy)
 
                     colliders[index] = Collider(v.to_unit(), orbX(), orbY(), speed, color, size)
+                    if (sfx) then
+                        sfx:play()
+                    end
 
                     index = index + 1
                 end

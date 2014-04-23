@@ -1,8 +1,6 @@
 NEXTSTEPS
 ---------
 
- - Add a 3, 2, 1 counter at the start
- - Automatically restart the game after a lose
  - Add a way to regain health
 
 DRAGONS
