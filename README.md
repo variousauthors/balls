@@ -16,9 +16,9 @@ any time to restart; never press 'ESCAPE', because that would end the game.
 
 You should just be able to download these and run them. Maybe on Linux you will need to also install love.
 
-[Linux][0]
-[OSX-x86][1]
-[WINDOWS][2]
+- [Linux][0]
+- [OSX-x86][1]
+- [WINDOWS][2]
 
 [0]: https://www.dropbox.com/s/1x6fjui1kjkmslv/Balls.love
 [1]: https://www.dropbox.com/s/6ts5u22btspflj9/balls-1.0.0-macosx-x86.zip
