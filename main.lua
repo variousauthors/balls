@@ -1,4 +1,5 @@
 require "entities"
+local socket = require("socket")
 
 local origin, player, orbiter
 local debug   = "nothing"
@@ -110,6 +111,69 @@ function love.draw()
 
 end
 
+function do_socket_stuff ()
+    local http = require("socket.http")
+    local ltn12 = require("ltn12")
+
+    local base_url = "http://gamejolt.com/api/game/v1"
+
+    --Helper for priniting nested table
+    function deep_print(tbl)
+        for i, v in pairs(tbl) do
+            if type(v) == "table" then 
+                deep_print(v)
+            else 
+                print(i, v) 
+            end
+        end
+    end
+
+
+    function http_request( args )
+    --http.request(url [, body])
+    --http.request{
+    --  url = string,
+    --  [sink = LTN12 sink,]
+    --  [method = string,]
+    --  [headers = header-table,]
+    --  [source = LTN12 source],
+    --  [step = LTN12 pump step,]
+    --  [proxy = string,]
+    --  [redirect = boolean,]
+    --  [create = function]
+    --}
+    --
+    --
+        local resp, r = {}, {}
+        if args.endpoint then
+            local params = ""
+            if args.method == nil or args.method == "GET" then
+                -- prepare query parameters like http://xyz.com?q=23&a=2
+                if args.params then
+                    for i, v in pairs(args.params) do
+                        params = params .. i .. "=" .. v .. "&"
+                    end
+                end
+            end
+            params = string.sub(params, 1, -2)
+            local url = ""
+            if params then url = base_url .. args.endpoint .. "?" .. params else url = base_url .. args.endpoint end
+print(url)
+            client, code, headers, status = http.request{url=url, sink=ltn12.sink.table(resp),
+                                                    method=args.method or "GET", headers=args.headers, source=args.source,
+                                                    step=args.step,     proxy=args.proxy, redirect=args.redirect, create=args.create }
+            r['code'], r['headers'], r['status'], r['response'] = code, headers, status, resp
+        else
+            error("endpoint is missing")
+        end
+        return r
+    end
+
+    deep_print(http_request{endpoint="/auth/", params={ game_id=19552, username="arrogant.gamer", user_token="259dec" }})
+print("===")
+    deep_print(http_request{endpoint="/users/", params={ game_id=19552, username="arrogant.gamer", user_token="259dec", signature="5a3d52db2906613c6ea2372e395126d6" }})
+end
+
 function love.load()
     -- image = love.graphics.newImage("cake.jpg")
     love.graphics.setBackgroundColor(200, 200, 200)
@@ -118,6 +182,9 @@ function love.load()
 
     origin  = Point(W_WIDTH / 2, W_HEIGHT / 2)
     player  = Entities.Player(origin)
+
+    do_socket_stuff()
+
     orbiters = {
         Entities.Orbiter(origin, W_WIDTH * 5, W_WIDTH * 5, math.pi / 20, 200, RED, 10, "assets/126029__strahlenkater__anp-proc-kick9.wav"),
         Entities.Orbiter(origin, W_WIDTH * 2, W_HEIGHT * 2, math.pi / 5, 300, GREEN, 20, "assets/8113__bliss__brownnoisesplinedkick1.wav"),
